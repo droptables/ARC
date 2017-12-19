@@ -93,7 +93,7 @@ func main() {
     defer session.Close()
 	session.SetMode(mgo.Monotonic, true)
     //c := session.DB("arc").C("feeds")
-    ac := session.DB("arc").C("articles2")
+    ac := session.DB("arc").C("articles3")
 
 	startcount, err2 := ac.Find(bson.M{}).Count()
 
@@ -103,15 +103,26 @@ func main() {
 
 	fmt.Println(startcount)
 
-    var doc Article
-    err = ac.Find(bson.M{"_id":"msnbc-host-skewers-claims-clinton-020745433.html"}).One(&doc)
-    fmt.Println(doc.Title)
+    var doc []Article
+    //err = ac.Find(bson.M{"_id":"http://www.foxnews.com/auto/2017/11/01/tesla-reports-671-million-q3-loss-delays-model-3-production-ramp-up-by-four-months.html"}).One(&doc)
+    ac.EnsureIndexKey("titlestextindex")    
+    ac.Find(bson.M{"$text": bson.M{"$search": "Tesla"}}).All(&doc)
+    
+    fmt.Println(doc[3].Title)
     //nlp(ctx, client)
     //fmt.Println(analyzeEntities(ctx, client, text))
-    result, err := analyzeSyntax(ctx, client, doc.Title)
+    result, err := analyzeSyntax(ctx, client, doc[3].Title)
+    for _, v := range(result.Tokens){
+        fmt.Println(v.Text, v.PartOfSpeech)
+    }
+    //fmt.Println(result.Tokens[3].Text)
+    //fmt.Println(result.Tokens[3].PartOfSpeech)
+    fmt.Println("-----Sentiment-------")
+    fmt.Println(result.Sentences[0].Sentiment)
     //fmt.Println(result.Entities)
+    fmt.Println("-----Entities-------")
     for _, v := range result.Entities {
-         fmt.Println(v.Name)
+         fmt.Println(v.Name, v.Type)
     }
     
     // for _, a := range newresults {
